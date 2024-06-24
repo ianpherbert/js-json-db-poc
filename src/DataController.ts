@@ -1,15 +1,14 @@
-import { readFile } from "fs";
+import { readFile, writeFile } from "fs";
 import * as path from "path";
 import { fileURLToPath } from "url";
+import { DataFileNames } from "./dataTypes";
+
 
 type CsvTransformer<T> = (csvLine: string) => T
 
 export abstract class DataClass {
   filter(_filter: FilterType<this>): Boolean {
     return;
-  }
-  static fromString(line: string): DataClass {
-    return this as unknown as DataClass;
   }
 }
 
@@ -22,16 +21,14 @@ export type FilterType<T> = {
 class DataController<T extends DataClass> {
   fileName: string;
   data: T[] = [];
-  csvTransformer: CsvTransformer<T>
-  constructor(fileName: string, csvTransformer: CsvTransformer<T>) {
-    this.fileName = fileName;
-    this.csvTransformer = csvTransformer;
+  constructor(fileName: DataFileNames) {
+    this.fileName = `../data/${fileName}.json`;
   }
 
   readData = async () => {
     const __dirname = path.dirname(fileURLToPath(import.meta.url));
     const pathName = path.resolve(__dirname, this.fileName);
-    const csv: string = await new Promise((res, rej) => {
+    const json: string = await new Promise((res, rej) => {
       readFile(pathName, "utf-8", (err, data) => {
         if (err) {
           rej(err);
@@ -40,14 +37,13 @@ class DataController<T extends DataClass> {
         res(data);
       });
     });
-    this.data = csv.split("\n").map((line) => this.csvTransformer(line))
+    this.data = JSON.parse(json)
   };
 
   static async BuildDataController<T extends DataClass>(
-    fileName: string,
-    csvTransformer: CsvTransformer<T>
+    fileName: DataFileNames,
   ) {
-    const controller = new DataController(fileName, csvTransformer);
+    const controller = new DataController<T>(fileName);
     await controller.readData();
     return controller;
   }

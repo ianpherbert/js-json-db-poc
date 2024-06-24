@@ -3,8 +3,7 @@ import { UserInfo } from "./UserInfo";
 
 (async () => {
   const controller = await DataController.BuildDataController<UserInfo>(
-    "../data/v1.csv",
-    UserInfo.fromString
+    "v1",
   );
   const data = controller.query({ firstName: "Veronica" });
   console.log(data);
